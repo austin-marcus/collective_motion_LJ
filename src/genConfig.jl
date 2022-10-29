@@ -1,12 +1,8 @@
 using Serialization
-using Revise
 using Random
 using LinearAlgebra
 using Printf
-includet("sim2.jl")
-# create position distribution
-# create velocity distribution
-# create these under different density (effectively volume) situations
+include("physics.jl")
 
 function avgDistToNearest(x)
     s = 0
@@ -47,10 +43,6 @@ function genConfig(outputDir, N, n; minDist=1, tag="")
     	    xs = zeros(N,2)
     	    n = 0
     	    while n < N
-    	        # xs = rand!(zeros(N, 2)) * (xRange[2]-xRange[1]) .+ xRange[1]
-    	        # if getMinR(xs, B, B) > minDist
-    	        #     break
-    	        # end
     	        newX = rand(2) * (xRange[2]-xRange[1]) .+ xRange[1]
     	        ok = true
     	        for i = 1:n

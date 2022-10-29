@@ -2,7 +2,6 @@ using JLD2
 using FileIO
 include("physics.jl")
 
-
 function loadData(stateFilename)
     # load invariants over whole run
     params = load(stateFilename * "-param.jld2")["params"]
@@ -17,7 +16,6 @@ function loadData(stateFilename)
     states = load(stateFilename * "-state.jld2")
     xs = []
     vs = []
-    # display(values(states) |> collect |> sort)
     for s in states |> values |> collect |> sort
         push!(xs, s[2])
         push!(vs, s[3])
@@ -25,12 +23,6 @@ function loadData(stateFilename)
 
     B = [-dim/2, dim/2]
     return Dict("c"=>c, "m"=>m, "B"=>B, "dim"=>dim, "dnn"=>dnn, "potFunc"=>potFunc, "xs"=>xs, "vs"=>vs)
-end
-
-function H(probs)
-    probs = filter(x->x!=0, probs)
-    # probs = probs .+ 1e-5
-    return -sum(probs .* log2.(probs))
 end
 
 function pointsToDistance(xs, B)
