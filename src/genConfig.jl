@@ -63,7 +63,7 @@ function genConfig(outputDir, N, n; minDist=1, tag="")
 
     	    vRange = [-V, V]
     	    vs = rand!(zeros(N, 2)) * (vRange[2]-vRange[1]) .+ vRange[1]
-    	    ms = ones(N, 2)
+    	    ms = ones(N, 1)
     	    cs = rand!(zeros(N, 2)) .-0.5 .|> x->x/abs(x)
     	    outFilename = @sprintf("N_%d-D_%d%s-%d-U%0.2d.conf", N, Int(round(dnn[i]*10)), tag != "" ? "-"*tag : "", s, Int(floor(rand() * 99)))
     	    serialize(joinpath(outputDir, outFilename), (xs, vs, ms, cs, dim, dnn[i]))

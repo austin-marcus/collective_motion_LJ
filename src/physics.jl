@@ -40,7 +40,14 @@ function getEnergy(x, v, m, c, pairEnergy, xB, yB)
 end
 
 function getMomentum(v, m)
-    return [sum(v[:,i] * m[i]) for i = 1:size(v)[2]]
+    # return [sum(v[:,i] * m[i]) for i = 1:size(v)[2]]
+    ret = [0.0, 0.0]
+    for i = 1:size(v)[2]
+        for j = 1:size(m)[1]
+            ret[i] += v[j, i] * m[j]
+        end
+    end
+    return ret
 end
 
 # produces vector from x2 to x1

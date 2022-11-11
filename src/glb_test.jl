@@ -34,21 +34,23 @@ savefig(p, "potential.png")
 data = CSV.read("./complexity_profile.csv", DataFrame)
 p1 = Plots.plot()
 title!("d < 0")
+d = 2
+cs = :rainbow
 for (i, row) in enumerate(eachrow(data))
-    if (row.d > 0)
+    if (row.d != -d)
         continue
     end
-    Plots.plot!(p1, r, x->f(x; s=row.s, d=row.d), ylim=ys, label=nothing, w=1, c=cgrad(:amp), line_z=row.cps, clims=(0.6, 1),colorbar_title="C", colorbar_titlefontrotation=90)
+    Plots.plot!(p1, r, x->f(x; s=row.s, d=row.d), ylim=(-4,0), label=nothing, w=2, c=cgrad(cs), line_z=row.cps, clims=(0.6, 1),colorbar_title="C", colorbar_titlefontrotation=90)
 end
 p2 = Plots.plot()
 title!("d > 0")
 for (i, row) in enumerate(eachrow(data))
-    if (row.d < 0)
+    if (row.d != d)
         continue
     end
-    Plots.plot!(p2, r, x->f(x; s=row.s, d=row.d), ylim=ys, label=nothing, w=1, c=cgrad(:amp), line_z=row.cps, clims=(0.6, 1), colorbar_title="C")
+    Plots.plot!(p2, r, x->f(x; s=row.s, d=row.d), ylim=(-2,1), label=nothing, w=2, c=cgrad(cs), line_z=row.cps, clims=(0.6, 1), colorbar_title="C")
 end
-p = Plots.plot(p1, p2; layout=(1,2), xguide="Distance", yguide="Potential Energy", fontfamily="Times New Roman", guidefontsize=18, tickfontsize=12, dpi=300, size=(4,4).*300, margin=10Plots.mm,
+p = Plots.plot(p1, p2; layout=(1,2), xguide="Distance", yguide="Potential Energy", fontfamily="Times New Roman", guidefontsize=18, tickfontsize=12, dpi=300, size=(3,3).*300, margin=10Plots.mm,
                 colorbar_titlefontsize=18, colorbar_tickfontsize=12)
 display(p)
 savefig(p, "max_complexity.png")

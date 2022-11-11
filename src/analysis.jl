@@ -53,6 +53,18 @@ function analysis(stateFilename; step=1, plotHeadless=false)
         results["energy"] = es
         results["energyRMSE"] = RMSE(es[1][1], es[1][2:end])
     end
+    
+    println("\t\tComputing momentum...")
+    if !("momentum" in items)
+        ps = []
+        for i = 1:div(length(data["vs"]), step):length(data["vs"])
+             push!(ps, getMomentum(data["vs"][i], data["m"]))
+        end
+        results["momentum"] = ps
+        # display(ps)
+        psMags = [ norm(ps[i]) for i=1:length(ps) ]
+        results["momentumRMSE"] = RMSE(psMags[1], psMags[2:end])
+    end
 
     # clustering profile
     println("\t\tComputing cluster profile for positions...")
