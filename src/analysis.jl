@@ -25,11 +25,13 @@ function analyze_energy(m, c, xs, vs, xB, yB, potFunc; step=1)
     return (Es, Vs, Ks)
 end
 
+# WARNING normalizes by init
 function RMSE(init, ts)
-    return ((ts .- init)/init*100).^2 |> sum |> x->x/length(ts) |> sqrt
+    # return ((ts .- init)/init*100).^2 |> sum |> x->x/length(ts) |> sqrt
+    return ((ts .- init)).^2 |> sum |> x->x/length(ts) |> sqrt |> x->x/abs(init)
 end
 
-function analysis(stateFilename; step=1, plotHeadless=false)
+function analysis(stateFilename; step=1, plotHeadless=false, outputDir=nothing, checkIfComputed=true)
     if plotHeadless
     	ENV["GKSwstype"] = "nul"
     end
@@ -37,7 +39,7 @@ function analysis(stateFilename; step=1, plotHeadless=false)
     data = loadData(stateFilename)
     analysisFilename = stateFilename * "-analysis.jld2"
     items = []
-    if isfile(analysisFilename)
+    if checkIfComputed && isfile(analysisFilename)
         items = load(analysisFilename) |> keys
     end
     results = Dict()
@@ -73,6 +75,10 @@ function analysis(stateFilename; step=1, plotHeadless=false)
         results["clustProf_size_v2"] = profile
     end
 
+    if outputDir != nothing
+        analysisFilename = joinpath(outputDir, basename(analysisFilename))
+    end
+    @printf("analysis outputting to %s\n", outputDir)
     jldopen(analysisFilename, "a+") do f
         for (name, result) ∈ results
             f[name] = result
@@ -82,8 +88,13 @@ function analysis(stateFilename; step=1, plotHeadless=false)
     return results
 end
 
-function analyzeAgendaGLB(agendaFilename; step=1, plotHeadless=false)
-    outputBase = dirname(agendaFilename)
+function analyzeAgendaGLB(agendaFilename; step=1, plotHeadless=false, outputBase=nothing, checkIfComputed=true)
+    inputBase = dirname(agendaFilename)
+    if outputBase == nothing
+        outputBase = inputBase 
+    end
+    @printf("input = %s, output = %s\n", inputBase, outputBase)
+        
     data = read(agendaFilename, String) |> TOML.parse
     outputFilenames = data["settings"]["analysisConfs"] |> x->map(y->split(basename(y),".")[1]*"_", x)
     files = []
@@ -93,7 +104,7 @@ function analyzeAgendaGLB(agendaFilename; step=1, plotHeadless=false)
             for s in data["settings"]["sValues"]
                 for d in data["settings"]["dValues"]
                     temp = @sprintf("%s_%.02f_d_%.02f", pot, s, d)
-                    str = joinpath(outputBase, f * temp)
+                    str = joinpath(inputBase, f * temp)
             	    @printf("\t%s\n", str)
                     push!(files, str)
                 end
@@ -104,7 +115,7 @@ function analyzeAgendaGLB(agendaFilename; step=1, plotHeadless=false)
     N = length(files)
     for (i, f) in enumerate(files)
         @printf("\tprocessing: %s: (%d / %d)\n", f, i, N)
-        r = analysis(f; step=step, plotHeadless=plotHeadless)
+        r = analysis(f; step=step, plotHeadless=plotHeadless, outputDir=outputBase, checkIfComputed=checkIfComputed)
         results[f] = r
     end
     return results
@@ -122,7 +133,7 @@ end
 
 function clusterProfOutput(dir)
     files = readdir(dir; join=true) |> x->filter(y->contains(y, "analysis.jld2"), x)
-    D = DataFrame(potential = String[], dnn = Float64[], dim=Float64[], s=Float64[], d=Float64[], energyRMSE=Float64[], profile=[])
+    D = DataFrame(potential = String[], dnn = Float64[], dim=Float64[], s=Float64[], d=Float64[], energyRMSE=Float64[], momentumRMSE=Float64[], profile=[])
     for f in files
         println(basename(f))
         name = f[1:findlast("-", f)[1]]
@@ -134,7 +145,7 @@ function clusterProfOutput(dir)
     		@printf("not found in %s", f)
     	end
 
-        row = vcat(param["pot"], param["dnn"], param["dim"], param["s"], param["d"], analysis["energyRMSE"], [analysis["clustProf_size_v2"]])
+        row = vcat(param["pot"], param["dnn"], param["dim"], param["s"], param["d"], analysis["energyRMSE"], analysis["momentumRMSE"], [analysis["clustProf_size_v2"]])
         push!(D, row)
     end
     return D
