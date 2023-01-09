@@ -56,27 +56,37 @@ savefig(p, "potential.png")
 # savefig(p, "max_complexity.png")
 
 
-# FIGURE
-dataMax = combine(sdf -> sdf[argmax(sdf.cps), :], groupby(data, :d)) |> x->sort(x,:d)
-p1 = Plots.plot()
-cs = :rainbow
-width = 3
-title!("d > 0")
-for row in eachrow(dataMax)
-    if (row.d < 0)
-        continue
-    end
-    Plots.plot!(p1, r, x->f(x; s=row.s, d=row.d), ylim=(-4,0), label=nothing, w=width, c=cgrad(cs), line_z=row.cps, clims=(0.6, 1),colorbar_title="C", colorbar_titlefontrotation=90)
+# # FIGURE
+# dataMax = combine(sdf -> sdf[argmax(sdf.cps), :], groupby(data, :d)) |> x->sort(x,:d)
+# p1 = Plots.plot()
+# cs = :rainbow
+# width = 3
+# title!("d > 0")
+# for row in eachrow(dataMax)
+#     if (row.d < 0)
+#         continue
+#     end
+#     Plots.plot!(p1, r, x->f(x; s=row.s, d=row.d), ylim=(-4,0), label=nothing, w=width, c=cgrad(cs), line_z=row.cps, clims=(0.6, 1),colorbar_title="C", colorbar_titlefontrotation=90)
+# end
+# p2 = Plots.plot()
+# title!("d < 0")
+# for row in eachrow(dataMax)
+#     if (row.d > 0)
+#         continue
+#     end
+#     Plots.plot!(p2, r, x->f(x; s=row.s, d=row.d), ylim=(-4,0), label=nothing, w=width, c=cgrad(cs), line_z=row.cps, clims=(0.6, 1),colorbar_title="C", colorbar_titlefontrotation=90)
+# end
+# p = Plots.plot(p1, p2; layout=(1,2), xguide="Distance", yguide="Potential Energy", fontfamily="Times New Roman", titlefontsize=22, guidefontsize=22, tickfontsize=22, dpi=300, size=(8,4).*300, margin=12Plots.mm,
+#                 colorbar_titlefontsize=22, colorbar_tickfontsize=18)
+# display(p)
+# savefig(p, "max_complexity2.png")
+
+p = Plots.plot()
+width=3
+c = 0.2
+for d = 0:0.5:4
+    s = c*d
+    Plots.plot!(p, r, x->f(x; s=s, d=d), ylim=(-4,0), label=nothing, w=width)
 end
-p2 = Plots.plot()
-title!("d < 0")
-for row in eachrow(dataMax)
-    if (row.d > 0)
-        continue
-    end
-    Plots.plot!(p2, r, x->f(x; s=row.s, d=row.d), ylim=(-4,0), label=nothing, w=width, c=cgrad(cs), line_z=row.cps, clims=(0.6, 1),colorbar_title="C", colorbar_titlefontrotation=90)
-end
-p = Plots.plot(p1, p2; layout=(1,2), xguide="Distance", yguide="Potential Energy", fontfamily="Times New Roman", titlefontsize=22, guidefontsize=22, tickfontsize=22, dpi=300, size=(8,4).*300, margin=12Plots.mm,
-                colorbar_titlefontsize=22, colorbar_tickfontsize=18)
 display(p)
-savefig(p, "max_complexity2.png")
+savefig(p, "same_ratio.png")
