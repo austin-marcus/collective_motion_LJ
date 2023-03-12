@@ -139,8 +139,10 @@ function generateSet(;dim, g, m, mult=1, num)
 		push!(data, row)
 	end
 
-	push!(data, vcat("coherent", dim, 1, NaN, [getCoherent(dim=dim)]))
-	push!(data, vcat("random", dim, 1, NaN, [getRandom(dim=dim)]))
+	for n = 1:num
+		push!(data, vcat("coherent", dim, n, NaN, [getCoherent(dim=dim)]))
+		push!(data, vcat("random", dim, n, NaN, [getRandom(dim=dim)]))
+	end
 
 	CSV.write(@sprintf("set_%.02f_g_%.02f_m_%d_mult_%.02f_%d.csv", dim, g, m, mult, num), data)
 	return errs[argmin(errs[:,2]), :]
