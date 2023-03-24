@@ -10,6 +10,11 @@ function V_glb(r, m1, m2, c1, c2, s, d, A; rThresh=2)
     end
 end
 
+function LJ(r, sigma, epsilon)
+    x = norm(r)
+    return 4 * epsilon * ( (sigma/x)^12 - (sigma/x)^6 )
+end
+
 function F_glb(r, m1, m2, c1, c2, s, d, A, rThresh=2)
     p = ( ((1-s)/abs(d))^(1/s) * s^((1-s)^-1) )^(A^-1)
     x = norm(r)

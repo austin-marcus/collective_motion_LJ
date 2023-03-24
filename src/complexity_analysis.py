@@ -10,6 +10,7 @@ import matplotlib.image as mpimg
 from sklearn import linear_model
 import seaborn as sns
 from scipy.optimize import curve_fit
+import matplotlib.lines as mlines
 
 def cps(profile, norm=False):
     C = sum( [np.log2(x)/(i+1)/np.log(2) if x > 1 else 0 for i, x in enumerate(profile)] ) # in paper 10/3/22
@@ -38,8 +39,15 @@ def particleProfileToCluster(L):
 def clusterProfileToParticle(L):
     return [i*x for i, x in enumerate(L, 1)]
 
+def getColorForAvg(L):
+    ex = {"complex": "green", "coherent": "red", "random": "blue", "powerlaw": "green"}
+    if L.source == "experiment":
+        return ex[L.regime]
+    else:
+        return ex[L.type]
+
 color = plt.cm.plasma
-def complexityProfile(data, exclude=1, fn="test.png", minmax=(None, None), lw=3, diff=False):
+def complexityProfile(data, exclude=1, fn="test.pdf", minmax=(None, None), lw=3, diff=False, avg=False):
     # M = max(data["cps"])
     M = 1
     # data["cps"] = data["cps"].apply(lambda x:(x/M))
@@ -62,7 +70,7 @@ def complexityProfile(data, exclude=1, fn="test.png", minmax=(None, None), lw=3,
                  # range(start, end), 
                  [np.log2(x) if x>1 else 0 for x in L.profile[start-1:end-1]], 
                  linewidth=lw, 
-                 color=color(norm(L.cps)),
+                 color=color(norm(L.cps)) if not avg else getColorForAvg(L),
                  linestyle="-" if L.source=="experiment" else "--"
                  # alpha=0.2
                 )
@@ -73,11 +81,23 @@ def complexityProfile(data, exclude=1, fn="test.png", minmax=(None, None), lw=3,
         ax.set_ylabel(r"$\log_2 \left ( \frac{d}{d\sigma}L(x) \right )$", fontsize=22, labelpad=15)
     else:
         ax.set_ylabel(r"$I(\sigma)$", fontsize=22, rotation=0, labelpad=30)
+
+    if not avg:
+        sm = plt.cm.ScalarMappable(cmap=color, norm=norm)
+        cbar = plt.gcf().colorbar(sm, shrink=0.75, ax=ax)
+        cbar.set_label(r"$C$", fontsize=22, rotation=0, labelpad=20)
+        cbar.ax.tick_params(labelsize=14) 
+    else:
+        complex = mlines.Line2D([], [], color='green', marker='s', ls='', label='Complex')
+        random = mlines.Line2D([], [], color='blue', marker='s', ls='', label='Homogeneous')
+        coherent = mlines.Line2D([], [], color='red', marker='s', ls='', label='Coherent')
+        bench = mlines.Line2D([], [], color='black', marker='', ls='--', label='Benchmark')
+        sim = mlines.Line2D([], [], color='black', marker='', ls='-', label='Simulation')
+
+        # etc etc
+        plt.legend(handles=[complex, random, coherent, bench, sim])
+
     ax.set_xlabel(r"$\sigma$", fontsize=22)
-    sm = plt.cm.ScalarMappable(cmap=color, norm=norm)
-    cbar = plt.gcf().colorbar(sm, shrink=0.75, ax=ax)
-    cbar.set_label(r"$C$", fontsize=22, rotation=0, labelpad=20)
-    cbar.ax.tick_params(labelsize=14) 
     plt.gcf().set_size_inches(6,6)
     fig.set_dpi(300)
     # plt.xlim(0, 24)
@@ -132,7 +152,7 @@ def heatmap(data, minmax=(None, None), ax=None):
         cbar.set_label(r"$C$", fontsize=22, rotation=0, labelpad=20)
         cbar.ax.tick_params(labelsize=14) 
         plt.tight_layout()
-        plt.savefig("heatmap.png")
+        plt.savefig("heatmap.pdf")
     else:
         cbar.set_label(r"$C$", rotation=0, labelpad=5, fontsize=14)
         cbar.ax.tick_params(labelsize=12) 
@@ -154,12 +174,12 @@ def c_rel(data):
     plt.axvline(meanPos, linestyle="--", color="black", alpha=0.5)
     plt.axvline(meanNeg, linestyle="--", color="black", alpha=0.5)
     plt.tight_layout()
-    plt.savefig("c_rel.png")
+    plt.savefig("c_rel.pdf")
 
     sns.relplot(data, x="s", y="cps", hue="d", errorbar="ci", kind="line")
-    plt.savefig("c_v_s.png")
+    plt.savefig("c_v_s.pdf")
     sns.relplot(data, x="d", y="cps", hue="s", errorbar="ci", kind="line")
-    plt.savefig("c_v_d.png")
+    plt.savefig("c_v_d.pdf")
     # plt.show()
 
 @mpl.rc_context({
@@ -187,29 +207,31 @@ def c_rel2(data):
     ax.vlines(meanPos, data["cps"].min(), data["cps"].max(), linestyles="dashed", linewidth=3, color="black")
     ax.vlines(meanNeg, data["cps"].min(), data["cps"].max(), linestyles="dashed", linewidth=3, color="black")
     plt.tight_layout()
-    plt.savefig("ratio.png")
+    plt.savefig("ratio.pdf")
     fig.set_dpi(300)
 
     fig, ax = plt.subplots(1,1, figsize=(4,4))
     sns.lineplot(data, x="s", y="cps", ax=ax, errorbar="sd")
     ax.set_xlabel("$s$")
     ax.set_ylabel("$C$", rotation="horizontal")
+    ax.set_ylim(13, 21)
     plt.tight_layout()
-    plt.savefig("s_v_C.png")
+    plt.savefig("s_v_C.pdf")
     fig.set_dpi(300)
 
     fig, ax = plt.subplots(1,1, figsize=(4,4))
     sns.lineplot(data, x="d", y="cps", ax=ax, errorbar="sd")
     ax.set_xlabel("$d$")
     ax.set_ylabel("$C$", rotation="horizontal")
+    ax.set_ylim(13, 21)
     plt.tight_layout()
-    plt.savefig("d_v_C.png")
+    plt.savefig("d_v_C.pdf")
     fig.set_dpi(300)
 
     # fig, ax = plt.subplots(1,1, figsize=(8,8))
     # heatmap(data, (data.cps.min(), data.cps.max()), ax=ax)
     # plt.tight_layout()
-    # plt.savefig("heatmap.png")
+    # plt.savefig("heatmap.pdf")
     # fig.set_dpi(300)
 
     # plt.show()
@@ -241,8 +263,9 @@ def sigTest(data, groupVar, plot=False):
     groups = [(name, group) for name, group in data.groupby(groupVar)]
     results = {}
     for g1, g2 in itertools.combinations(groups, 2):
-        data1 = g1[1]["cps"]
-        data2 = g2[1]["cps"]
+        data1 = list(g1[1]["cps"])
+        data2 = list(g2[1]["cps"])
+        print(data1)
         results[frozenset([g1[0], g2[0]])] = stats.ttest_ind(data1, data2, equal_var=False)
     for name, group in groups:
         results[name] = (group["cps"].mean(), group["cps"].std())
@@ -252,12 +275,13 @@ def sigTest(data, groupVar, plot=False):
         fig.set_dpi(300)
         sns.set_context("talk")
         sns.histplot(data, x="cps", hue="regime", palette=["red", "blue", "green"], ax=ax)
-        sns.move_legend(ax, "upper left", labels=["Coherent", "Homogeneous", "Complex"], title=None)
+        sns.move_legend(ax, "upper left", labels=["Coherent", "Homogeneous", "Complex"][::-1], title=None)
+        # sns.move_legend(ax, "upper left", title=None)
         ax.set_xlabel("$C$")
         # plt.margins(0.2)
         plt.tight_layout()
         # plt.legend(labels=["Coherent", "Homogeneous", "Complex"])
-        plt.savefig("regime_hist.png")
+        plt.savefig("regime_hist.pdf")
 
     return results
 
@@ -289,7 +313,7 @@ def doProfile():
     # # for row in data1.iterrows():
     # #     ax.plot(np.diff(row[-1].profile)*-1)
     # ex = 24
-    # complexityProfile(data1, exclude=ex, fn=f"profile_exact_exclude_{ex}.png")
+    # complexityProfile(data1, exclude=ex, fn=f"profile_exact_exclude_{ex}.pdf")
 
     plt.rcParams["font.family"] = "Times New Roman"
     # average profiles
@@ -303,11 +327,12 @@ def doProfile():
     data["cps"] = data["profile"].apply(cps)
     print(dataAvg)
     minmax = (data.cps.min(), data.cps.max())
-    complexityProfile(dataAvg, fn="avg.png", minmax=minmax)
-    complexityProfile(data, exclude=20, fn="raw_profile.png", minmax=minmax, lw=1)
+    complexityProfile(dataAvg, fn="avg.pdf", minmax=minmax, avg=True)
+    complexityProfile(dataAvg, fn="avg2.pdf", minmax=minmax, avg=False)
+    complexityProfile(data, exclude=20, fn="raw_profile.pdf", minmax=minmax, lw=1)
     dataAvg["profile"] = dataAvg["profile"].apply(lambda x: -np.diff(x))
     print(dataAvg)
-    complexityProfile(dataAvg, fn="avg_diff.png", minmax=minmax, diff=True)
+    complexityProfile(dataAvg, fn="avg_diff.pdf", minmax=minmax, diff=True)
     heatmap(data, minmax=minmax)
     c_rel2(data)
 
@@ -326,8 +351,8 @@ def particlePlots():
         axes[i].set_yticks([])
     plt.tight_layout()
     fig.set_dpi(100)
-    plt.show()
-    fig.savefig("benchmark_plots.png")
+    # plt.show()
+    fig.savefig("benchmark_plots.pdf")
 
 # give a copy of data; modifies data
 def cRegression(data):
